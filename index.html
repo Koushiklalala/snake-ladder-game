@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake & Ladder Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 30px;
+      max-width: 1200px;
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .dice-section {
+      text-align: center;
+    }
+
+    .dice-display {
+      font-size: 80px;
+      margin: 20px 0;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+      animation: bounce 0.6s ease;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .roll-button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .roll-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .roll-button:active {
+      transform: translateY(0);
+    }
+
+    .roll-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .current-turn {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .players-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .players-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+    }
+
+    .player-item {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .player-item.active {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: white;
+    }
+
+    .player-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .player-info {
+      flex: 1;
+      font-size: 13px;
+    }
+
+    .player-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .player-pos {
+      opacity: 0.8;
+      font-size: 12px;
+    }
+
+    .game-log {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 15px;
+      flex: 1;
+      overflow-y: auto;
+      max-height: 250px;
+    }
+
+    .game-log::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .game-log::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .game-log::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .log-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .log-item {
+      font-size: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0.9;
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .reset-button {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .reset-button:hover {
+      background: white;
+      color: #667eea;
+    }
+
+    .board-section {
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 15px;
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 600px;
+    }
+
+    .cell {
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-weight: 700;
+      font-size: 11px;
+      color: #999;
+      cursor: default;
+      transition: background 0.2s;
+      border: 1px solid #eee;
+      aspect-ratio: 1;
+    }
+
+    .cell:hover {
+      background: #f9f9f9;
+    }
+
+    .cell.ladder {
+      background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+      color: #2d5016;
+    }
+
+    .cell.snake {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      color: #6d0f1f;
+    }
+
+    .cell.goal {
+      background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .cell-label {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      font-size: 9px;
+      opacity: 0.6;
+    }
+
+    .tokens {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 2px;
+    }
+
+    .token {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    .marker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        padding: 30px;
+      }
+
+      .board-section {
+        padding: 20px;
+      }
+
+      .title {
+        font-size: 24px;
+      }
+
+      .dice-display {
+        font-size: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="title">🎲 Snake & Ladder</div>
+
+      <div class="dice-section">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">Dice Roll</div>
+        <div class="dice-display" id="diceDisplay">🎲</div>
+        <button class="roll-button" id="rollBtn">Roll Dice</button>
+      </div>
+
+      <div class="current-turn" id="currentTurn">Player 1's Turn</div>
+
+      <div class="players-section">
+        <div class="players-title">Players</div>
+        <div id="playersList"></div>
+      </div>
+
+      <div class="game-log">
+        <div class="log-title">Game Log</div>
+        <div id="logContainer"></div>
+      </div>
+
+      <button class="reset-button" id="resetBtn">↻ Reset Game</button>
+    </div>
+
+    <!-- Board -->
+    <div class="board-section">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const playersListEl = document.getElementById("playersList");
+    const logContainerEl = document.getElementById("logContainer");
+    const diceDisplayEl = document.getElementById("diceDisplay");
+    const currentTurnEl = document.getElementById("currentTurn");
+    const rollBtn = document.getElementById("rollBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const snakes = {
+      16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60,
+      87: 24, 93: 73, 95: 75, 98: 78
+    };
+
+    const ladders = {
+      1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44,
+      51: 67, 71: 91, 80: 100
+    };
+
+    const players = [
+      { name: "Player 1", color: "#FF6B6B", position: 0 },
+      { name: "Player 2", color: "#4ECDC4", position: 0 },
+      { name: "Player 3", color: "#FFE66D", position: 0 },
+      { name: "Player 4", color: "#95E1D3", position: 0 }
+    ];
+
+    let currentPlayerIndex = 0;
+    let gameOver = false;
+    let logs = [];
+
+    function addLog(message) {
+      logs.unshift(message);
+      if (logs.length > 10) logs.pop();
+      updateLog();
+    }
+
+    function updateLog() {
+      logContainerEl.innerHTML = logs
+        .map(log => `<div class="log-item">• ${log}</div>`)
+        .join("");
+    }
+
+    function getBoardValues() {
+      const values = [];
+      for (let row = 9; row >= 0; row--) {
+        for (let col = 0; col < 10; col++) {
+          const value = row % 2 === 0
+            ? row * 10 + col + 1
+            : row * 10 + (9 - col) + 1;
+          values.push(value);
+        }
+      }
+      return values;
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      const values = getBoardValues();
+
+      values.forEach(value => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+
+        if (value === 100) cell.classList.add("goal");
+        else if (snakes[value]) cell.classList.add("snake");
+        else if (ladders[value]) cell.classList.add("ladder");
+
+        const label = document.createElement("div");
+        label.className = "cell-label";
+        label.textContent = value;
+        cell.appendChild(label);
+
+        if (snakes[value]) {
+          const marker = document.createElement("div");
+          marker.className = "marker";
+          marker.textContent = "🐍";
+          cell.appendChild(marker);
+        } else if (ladders[value]) {
+          const marker = document.createElement("div");
+          marker.className = "marker";
+          marker.textContent = "🪜";
+          cell.appendChild(marker);
+        }
+
+        const tokens = document.createElement("div");
+        tokens.className = "tokens";
+        players.forEach(player => {
+          if (player.position === value) {
+            const token = document.createElement("div");
+            token.className = "token";
+            token.style.background = player.color;
+            tokens.appendChild(token);
+          }
+        });
+        cell.appendChild(tokens);
+
+        boardEl.appendChild(cell);
+      });
+    }
+
+    function renderPlayers() {
+      playersListEl.innerHTML = players
+        .map((p, i) => `
+          <div class="player-item ${i === currentPlayerIndex && !gameOver ? 'active' : ''}">
+            <div class="player-dot" style="background: ${p.color};"></div>
+            <div class="player-info">
+              <div class="player-name">${p.name}</div>
+              <div class="player-pos">Position: ${p.position}</div>
+            </div>
+          </div>
+        `)
+        .join("");
+    }
+
+    function updateTurn() {
+      if (gameOver) {
+        currentTurnEl.textContent = `🎉 ${players[currentPlayerIndex].name} Wins!`;
+      } else {
+        currentTurnEl.textContent = `${players[currentPlayerIndex].name}'s Turn`;
+      }
+    }
+
+    function applyBoardEffect(player) {
+      if (ladders[player.position]) {
+        const newPos = ladders[player.position];
+        addLog(`🪜 Ladder! ${player.name}: ${player.position} → ${newPos}`);
+        player.position = newPos;
+      } else if (snakes[player.position]) {
+        const newPos = snakes[player.position];
+        addLog(`🐍 Snake! ${player.name}: ${player.position} → ${newPos}`);
+        player.position = newPos;
+      }
+    }
+
+    function checkWin(player) {
+      if (player.position === 100) {
+        gameOver = true;
+        addLog(`${player.name} reached 100! 🏆`);
+        updateTurn();
+        renderPlayers();
+        rollBtn.disabled = true;
+        return true;
+      }
+      return false;
+    }
+
+    function nextTurn() {
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      updateTurn();
+      renderPlayers();
+    }
+
+    function rollDice() {
+      if (gameOver) return;
+
+      const player = players[currentPlayerIndex];
+      const roll = Math.floor(Math.random() * 6) + 1;
+
+      diceDisplayEl.textContent = roll;
+      diceDisplayEl.style.animation = "none";
+      setTimeout(() => {
+        diceDisplayEl.style.animation = "bounce 0.6s ease";
+      }, 10);
+
+      const target = player.position + roll;
+
+      if (target > 100) {
+        addLog(`${player.name} rolled ${roll} - overshot!`);
+        nextTurn();
+        renderBoard();
+        return;
+      }
+
+      player.position = target;
+      addLog(`${player.name} rolled ${roll} → ${player.position}`);
+
+      applyBoardEffect(player);
+
+      if (checkWin(player)) {
+        renderBoard();
+        return;
+      }
+
+      nextTurn();
+      renderBoard();
+      renderPlayers();
+    }
+
+    function resetGame() {
+      players.forEach(p => p.position = 0);
+      currentPlayerIndex = 0;
+      gameOver = false;
+      logs = [];
+      diceDisplayEl.textContent = "🎲";
+      addLog("Game started!");
+      updateTurn();
+      renderBoard();
+      renderPlayers();
+      rollBtn.disabled = false;
+    }
+
+    rollBtn.addEventListener("click", rollDice);
+    resetBtn.addEventListener("click", resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
